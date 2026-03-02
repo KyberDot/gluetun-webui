@@ -231,6 +231,7 @@ Each instance can have different authentication:
 | `GLUETUN_USER` | _(empty)_ | **Legacy** – Username for HTTP Basic auth |
 | `GLUETUN_PASSWORD` | _(empty)_ | **Legacy** – Password for HTTP Basic auth |
 | `PORT` | `3000` | Port the web UI listens on |
+| `TRUST_PROXY` | `false` | Set to `true` if running behind a reverse proxy (nginx, Traefik, etc.) |
 
 ---
 
@@ -240,6 +241,20 @@ Each instance can have different authentication:
 - Container runs as non-root with read-only filesystem and dropped capabilities
 - Rate limiting applied to all API routes
 - Upstream error details are logged server-side only — generic messages returned to the browser
+
+### Reverse-proxy configuration
+
+If you run gluetun-webui behind a reverse proxy (nginx, Traefik, Caddy, etc.), set `TRUST_PROXY=true` in your environment variables:
+
+```yaml
+gluetun-webui:
+  image: scuzza/gluetun-webui:latest
+  environment:
+    - GLUETUN_CONTROL_URL=http://gluetun:8000
+    - TRUST_PROXY=true  # Required for reverse proxies
+```
+
+This allows the app to correctly parse `X-Forwarded-For` and related headers for accurate rate limiting and IP detection. **Note:** Only enable this if you're actually behind a reverse proxy, as it trusts proxy headers from your reverse proxy.
 
 ### Reverse-proxy authentication
 

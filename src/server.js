@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 
 const app = express();
+app.set('trust proxy', process.env.TRUST_PROXY === 'true');
 app.disable('x-powered-by');
 const PORT = process.env.PORT || 3000;
 

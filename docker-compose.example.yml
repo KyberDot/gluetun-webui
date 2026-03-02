@@ -11,6 +11,8 @@ services:
       # Single-instance setup (legacy / default) – point to one gluetun container
       # -----------------------------------------------------------------------
       - GLUETUN_CONTROL_URL=http://gluetun:8000
+      # Set to 'true' if behind a reverse proxy (nginx, Traefik, etc.)
+      - TRUST_PROXY=false
 
       # Uncomment ONE of the auth options below if Gluetun has auth enabled:
       # Bearer token (HTTP_CONTROL_SERVER_AUTH=apikey:yourtoken in gluetun)
