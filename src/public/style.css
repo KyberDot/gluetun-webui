@@ -34,8 +34,7 @@ header {
   z-index: 100;
 }
 .header-inner {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
   padding: 0.75rem 1.5rem;
   display: flex;
   align-items: center;
@@ -89,9 +88,29 @@ select {
 
 /* ---- Main ---- */
 main {
-  max-width: 1200px;
-  margin: 1.5rem auto;
-  padding: 0 1.5rem 3rem;
+  /* layout handled by .dashboards-container */
+}
+
+/* ---- Dashboards grid ---- */
+.dashboards-container {
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  padding: 0;
+  margin: 0;
+}
+
+/* ---- Dashboard group ---- */
+.dashboard-group {
+  padding: 1.5rem;
+}
+
+/* ---- Dashboard grid (cards inside each group) ---- */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1rem;
 }
 
 /* ---- Status banner ---- */
@@ -215,6 +234,36 @@ main {
 .dot.disconnected { background: var(--red); }
 .dot.unknown      { background: var(--muted); }
 
+/* ---- Instance tabs ---- */
+.instance-tabs {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.55rem 1.5rem;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.instance-tabs.hidden { display: none; }
+.tab-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 0.32rem 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.tab-btn:hover { background: var(--surface2); color: var(--text); }
+.tab-btn.active {
+  background: rgba(74,222,128,0.12);
+  border-color: var(--green);
+  color: var(--green);
+  font-weight: 600;
+}
+
 /* ---- Toast ---- */
 .toast {
   position: fixed;
@@ -243,6 +292,7 @@ main {
 /* ---- Responsive ---- */
 @media (max-width: 600px) {
   .header-inner { flex-direction: column; align-items: flex-start; }
+  .dashboard-group { padding: 1rem 0.75rem; }
+  .dashboard-grid { grid-template-columns: 1fr; }
   .banner-actions { flex-direction: column; }
-  .grid { grid-template-columns: 1fr; }
 }

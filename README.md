@@ -10,6 +10,7 @@ A lightweight web UI for monitoring and controlling [Gluetun](https://github.com
 
 ## Features
 
+- ✨ **Multi-VPN Support** — Monitor & control up to 20 Gluetun instances simultaneously
 - Live VPN status banner (connected / paused / disconnected)
 - Public exit IP, country, region, city, and organisation
 - VPN provider, protocol (WireGuard / OpenVPN), server details
@@ -17,6 +18,7 @@ A lightweight web UI for monitoring and controlling [Gluetun](https://github.com
 - Start / Stop VPN controls
 - Auto-refresh with configurable interval (5s – 60s)
 - Last 30 poll ticks colour-coded in history bar
+- Responsive design (mobile, tablet, desktop)
 
 ---
 
@@ -37,7 +39,7 @@ A lightweight web UI for monitoring and controlling [Gluetun](https://github.com
 
 ## Quick Start
 
-### Option A: Docker Hub (Recommended)
+### Option A1: Single Instance (Recommended)
 
 Add `gluetun-webui` to your existing compose file alongside Gluetun:
 
@@ -71,13 +73,39 @@ gluetun-webui:
     retries: 3
 ```
 
-Then run:
+### Option A2: Multiple Instances
 
-```bash
-docker compose up -d
+Monitor 2+ Gluetun instances with separate dashboards:
+
+```yaml
+gluetun-webui:
+  image: scuzza/gluetun-webui:latest
+  container_name: gluetun-webui
+  ports:
+    - "127.0.0.1:3000:3000"
+  environment:
+    - GLUETUN_1_NAME=VPN - London
+    - GLUETUN_1_URL=http://gluetun-1:8000
+    - GLUETUN_1_API_KEY=token1
+    
+    - GLUETUN_2_NAME=VPN - Amsterdam  
+    - GLUETUN_2_URL=http://gluetun-2:8000
+    - GLUETUN_2_API_KEY=token2
+    
+    - GLUETUN_3_NAME=VPN - Singapore
+    - GLUETUN_3_URL=http://gluetun-3:8000
+    - GLUETUN_3_API_KEY=token3
+  networks:
+    - your_network_name
+  restart: unless-stopped
+  read_only: true
+  tmpfs:
+    - /tmp
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
 ```
-
-The UI is available at **http://localhost:3000**
 
 ### Option B: Build Locally
 
@@ -86,6 +114,14 @@ git clone https://github.com/Sir-Scuzza/gluetun-webui.git
 cd gluetun-webui
 docker compose up -d --build
 ```
+
+Then run (either option):
+
+```bash
+docker compose up -d
+```
+
+The UI is available at **http://localhost:3000**
 
 ---
 
@@ -120,14 +156,80 @@ networks:
 
 ---
 
+## Multi-VPN Support
+
+### Multiple Instances
+
+gluetun-webui supports monitoring and controlling **multiple Gluetun instances simultaneously**. Each instance displays as a separate dashboard in a responsive grid.
+
+**Configuration**: Use numbered environment variables:
+
+```yaml
+gluetun-webui:
+  image: scuzza/gluetun-webui:latest
+  environment:
+    # Instance 1
+    - GLUETUN_1_NAME=VPN 1
+    - GLUETUN_1_URL=http://gluetun-1:8000
+    - GLUETUN_1_API_KEY=token1  # optional
+
+    # Instance 2
+    - GLUETUN_2_NAME=VPN 2
+    - GLUETUN_2_URL=http://gluetun-2:8000
+    - GLUETUN_2_API_KEY=token2  # optional
+
+    # Instance 3
+    - GLUETUN_3_NAME=VPN 3
+    - GLUETUN_3_URL=http://gluetun-3:8000
+    - GLUETUN_3_USER=admin
+    - GLUETUN_3_PASSWORD=secret  # optional (HTTP Basic auth)
+```
+
+**Supported**: Up to 20 instances (via `GLUETUN_1_URL` through `GLUETUN_20_URL`)  
+**Responsive**: 1 full-width dashboard → 2 half-width → 3 third-width → 4 quarter-width → scrollable at 5+
+
+### Backward Compatibility
+
+If no numbered variables are configured, falls back to **legacy single-instance mode**:
+
+```yaml
+environment:
+  - GLUETUN_CONTROL_URL=http://gluetun:8000  # legacy
+  - GLUETUN_API_KEY=token
+```
+
+### Per-Instance Authentication
+
+Each instance can have different authentication:
+
+```yaml
+# Instance with API key
+- GLUETUN_1_API_KEY=my-secret-token
+
+# Instance with HTTP Basic auth
+- GLUETUN_2_USER=admin
+- GLUETUN_2_PASSWORD=mysecret
+
+# Instance with no auth
+- GLUETUN_3_URL=http://gluetun-3:8000  # auth optional
+```
+
+---
+
 ## Configuration
 
 | Variable | Default | Description |
 |---|---|---|
-| `GLUETUN_CONTROL_URL` | `http://gluetun:8000` | Gluetun HTTP control server URL |
-| `GLUETUN_API_KEY` | _(empty)_ | Bearer token (if Gluetun API key auth is enabled) |
-| `GLUETUN_USER` | _(empty)_ | Username for HTTP Basic auth |
-| `GLUETUN_PASSWORD` | _(empty)_ | Password for HTTP Basic auth |
+| `GLUETUN_1_*` to `GLUETUN_20_*` | _(empty)_ | **Multi-instance config** (up to 20 instances) |
+| `GLUETUN_{N}_URL` | – | Gluetun HTTP control server URL for instance N |
+| `GLUETUN_{N}_NAME` | `Instance {N}` | Display name for instance N |
+| `GLUETUN_{N}_API_KEY` | _(empty)_ | Bearer token for instance N (if auth enabled) |
+| `GLUETUN_{N}_USER` | _(empty)_ | Username for HTTP Basic auth (instance N) |
+| `GLUETUN_{N}_PASSWORD` | _(empty)_ | Password for HTTP Basic auth (instance N) |
+| `GLUETUN_CONTROL_URL` | `http://gluetun:8000` | **Legacy** – single instance only (fallback if no `GLUETUN_1_*` vars) |
+| `GLUETUN_API_KEY` | _(empty)_ | **Legacy** – Bearer token for single instance |
+| `GLUETUN_USER` | _(empty)_ | **Legacy** – Username for HTTP Basic auth |
+| `GLUETUN_PASSWORD` | _(empty)_ | **Legacy** – Password for HTTP Basic auth |
 | `PORT` | `3000` | Port the web UI listens on |
 
 ---

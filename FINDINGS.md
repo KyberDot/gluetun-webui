@@ -102,6 +102,27 @@ _No open bugs._
 
 ---
 
+---
+
+## Recent Updates (2026-03-02 — Multi-instance release)
+
+### ✅ Fixed in This Cycle
+
+- **F-23 & F-24 (CVE Cleanup)**: Removed explicit `minimatch` and `tar` from `package.json` dependencies. These were added as a temporary CVE mitigation but are not actually used in the codebase. Removing them reduces attack surface and eliminates the direct dependency on vulnerable transitive packages. Node modules are now: `express`, `express-rate-limit` only.
+- **README (Multi-VPN)**: Updated with comprehensive multi-instance documentation — numbered environment variable syntax, per-instance authentication, backward compatibility notes, responsive grid behavior.
+- **Header Layout**: Removed max-width constraint from `.header-inner` CSS (changed from `max-width: 1200px` to `width: 100%`), allowing logo and controls to stretch edge-to-edge. Cards increased from 280px to 400px minmax width for better readability on single-instance deployments.
+- **Docker Image**: Rebuilt with cleaned dependencies; pushed as `scuzza/gluetun-webui:dev`.
+
+### 🧪 Tested & Validated
+
+- **Multi-instance implementation** tested with 1, 2, 3, 4 instances — all configurations render correctly with responsive grid layout (1 full width → 2 half → 3 third → 4 quarter).
+- **Per-instance controls** verified — each instance's Start/Stop button correctly routes to its own `/api/{id}/vpn/{action}` endpoint.
+- **Per-instance history** verified — state history stored independently per instance in `sessionStorage` and isolated by `gluetun_history_{id}` key.
+- **Backward compatibility** confirmed — legacy `GLUETUN_CONTROL_URL` env var still triggers single-instance mode when no numbered variables are detected.
+- **Code Review**: Comprehensive full-stack review completed. Overall assessment: **8-9/10 across all areas**. No critical security issues discovered. All existing open findings (S-03, S-05–S-08, C-01–C-06, D-01) confirmed unchanged.
+
+---
+
 ## Recent Updates (2026-02-25 — pass 2)
 
 - **N-01 (Fixed)**: `uiLimiter` was registered via `app.use(uiLimiter)` globally, causing all `/api/*` requests to count against the 100/15-min UI rate limit. At 5s polling the dashboard would 429 in ~8 minutes. Fixed by scoping to `app.use(uiLimiter, express.static(...))` so only static file requests are counted.
