@@ -1,40 +1,54 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 app.set('trust proxy', process.env.TRUST_PROXY === 'true');
 app.disable('x-powered-by');
 const PORT = process.env.PORT || 3000;
 
+// --- Docker Secrets Support ---
+// Try to read from /run/secrets/ (Docker Swarm/Compose secrets), fall back to env vars
+function getConfigValue(envVar, secretName = null) {
+  const secretPath = `/run/secrets/${secretName || envVar.toLowerCase()}`;
+  try {
+    if (fs.existsSync(secretPath)) {
+      return fs.readFileSync(secretPath, 'utf8').trim();
+    }
+  } catch (_) {}
+  return process.env[envVar] || '';
+}
+
 // --- Multi-instance configuration ---
 // Define multiple gluetun instances via numbered env vars:
 //   GLUETUN_1_URL, GLUETUN_1_NAME, GLUETUN_1_API_KEY, GLUETUN_1_USER, GLUETUN_1_PASSWORD
 //   GLUETUN_2_URL, GLUETUN_2_NAME, ...
+// Or via Docker secrets: gluetun_1_url, gluetun_1_api_key, etc.
 // Falls back to legacy single-instance vars (GLUETUN_CONTROL_URL, GLUETUN_API_KEY, etc.)
 function parseInstances() {
   const list = [];
   for (let i = 1; i <= 20; i++) {
-    const url = process.env[`GLUETUN_${i}_URL`];
+    const url = getConfigValue(`GLUETUN_${i}_URL`, `gluetun_${i}_url`);
     if (!url) continue;
     list.push({
       id: String(i),
-      name: process.env[`GLUETUN_${i}_NAME`] || `Instance ${i}`,
+      name: getConfigValue(`GLUETUN_${i}_NAME`, `gluetun_${i}_name`) || `Instance ${i}`,
       url: url.replace(/\/$/, ''),
-      apiKey:   process.env[`GLUETUN_${i}_API_KEY`]  || '',
-      user:     process.env[`GLUETUN_${i}_USER`]     || '',
-      password: process.env[`GLUETUN_${i}_PASSWORD`] || '',
+      apiKey:   getConfigValue(`GLUETUN_${i}_API_KEY`, `gluetun_${i}_api_key`),
+      user:     getConfigValue(`GLUETUN_${i}_USER`, `gluetun_${i}_user`),
+      password: getConfigValue(`GLUETUN_${i}_PASSWORD`, `gluetun_${i}_password`),
     });
   }
   if (list.length === 0) {
     // Legacy single-instance fallback
     list.push({
       id: '1',
-      name: process.env.GLUETUN_NAME || 'Gluetun',
-      url: (process.env.GLUETUN_CONTROL_URL || 'http://gluetun:8000').replace(/\/$/, ''),
-      apiKey:   process.env.GLUETUN_API_KEY  || '',
-      user:     process.env.GLUETUN_USER     || '',
-      password: process.env.GLUETUN_PASSWORD || '',
+      name: getConfigValue('GLUETUN_NAME', 'gluetun_name') || 'Gluetun',
+      url: (getConfigValue('GLUETUN_CONTROL_URL', 'gluetun_control_url') || 'http://gluetun:8000').replace(/\/$/, ''),
+      apiKey:   getConfigValue('GLUETUN_API_KEY', 'gluetun_api_key'),
+      user:     getConfigValue('GLUETUN_USER', 'gluetun_user'),
+      password: getConfigValue('GLUETUN_PASSWORD', 'gluetun_password'),
     });
   }
   return list;

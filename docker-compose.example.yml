@@ -83,3 +83,42 @@ networks:
 #networks:
 #  gluetun-stack:
 #    driver: bridge
+# ============================================================================
+# OPTION B: With Docker Secrets (Docker Swarm or Compose)
+# More secure for sensitive data like API keys and passwords
+# ============================================================================
+
+# secrets:
+#   gluetun_api_key:
+#     file: ./secrets/gluetun_api_key.txt
+#   gluetun_password:
+#     file: ./secrets/gluetun_password.txt
+# 
+# services:
+#   gluetun-webui:
+#     image: scuzza/gluetun-webui:latest
+#     container_name: gluetun-webui
+#     ports:
+#       - "127.0.0.1:3000:3000"
+#     environment:
+#       - GLUETUN_CONTROL_URL=http://gluetun:8000
+#       # For API key authentication (uses Docker secret):
+#       # Secret will be read from /run/secrets/gluetun_api_key
+#       # No need to set GLUETUN_API_KEY in environment
+#     secrets:
+#       - gluetun_api_key
+#       - gluetun_password
+#     networks:
+#       - gluetun-stack
+#     restart: unless-stopped
+#     read_only: true
+#     tmpfs:
+#       - /tmp
+#     security_opt:
+#       - no-new-privileges:true
+#     cap_drop:
+#       - ALL
+# 
+# networks:
+#   gluetun-stack:
+#     driver: bridge
